@@ -22,9 +22,9 @@ local onoff =
     variable = EasyMCM.createTableVariable {id = "modActive", table = config},
     callback = function()
         if config.modActive == true then
-            tes3.messageBox("Signpost Fast Travel is turned ON")
+            --tes3.messageBox("Signpost Fast Travel is turned ON")
         else
-            tes3.messageBox("Signpost Fast Travel is turned OFF")
+            --tes3.messageBox("Signpost Fast Travel is turned OFF")
         end
     end
 }
@@ -38,10 +38,9 @@ local debug = general:createOnOffButton{
     },
     callback = function()
         if config.debug == true then
-            tes3.messageBox("Debug is turned ON")
+            --tes3.messageBox("Debug is turned ON")
         else
-            tes3.messageBox("Debug is turned OFF")
-
+            --tes3.messageBox("Debug is turned OFF")
         end
     end
 }
@@ -55,9 +54,9 @@ local stats = general:createYesNoButton{
     },
     callback = function()
         if config.showStats == true then
-            tes3.messageBox("Show journey summary")
+            --tes3.messageBox("Show journey summary")
         else
-            tes3.messageBox("No journay summary")
+            --tes3.messageBox("No journay summary")
         end
     end
 }
@@ -89,10 +88,10 @@ local confirm =
     variable = EasyMCM.createTableVariable {id = "showConfirm", table = config},
     callback = function()
         if config.showConfirm == true then
-            tes3.messageBox("Confirm before traveling")
+            --tes3.messageBox("Confirm before traveling")
         else
             config.extraRealism = false
-            tes3.messageBox("No confirmation")
+            --tes3.messageBox("No confirmation")
         end
         local MCMModList = tes3ui.findMenu("MWSE:ModConfigMenu").children
 
@@ -107,13 +106,13 @@ local confirm =
 local combatDeny =
     game:createYesNoButton {
     label = "Travelling is forbidden during combat?",
-    description = "Signpost Fast travel cannot be used while in combat\n\n*If you can rest, you can travel",
+    description = "Signpost Fast travel cannot be used while in combat\n\n",
     variable = EasyMCM.createTableVariable {id = "combatDeny", table = config},
     callback = function()
         if config.combatDeny == true then
-            tes3.messageBox("No fast travel during combat")
+            --tes3.messageBox("No fast travel during combat")
         else
-            tes3.messageBox("Fast travel anytime")
+            --tes3.messageBox("Fast travel anytime")
         end
     end
 }
@@ -125,10 +124,10 @@ local timeAdvance =
     variable = EasyMCM.createTableVariable {id = "timeAdvance", table = config},
     callback = function()
         if config.timeAdvance == true then
-            tes3.messageBox("Travel advances time")
+            --tes3.messageBox("Travel advances time")
         else
             config.extraRealism = false
-            tes3.messageBox("Do not advance time")
+            --tes3.messageBox("Do not advance time")
         end
         local MCMModList = tes3ui.findMenu("MWSE:ModConfigMenu").children
 
@@ -143,14 +142,14 @@ local timeAdvance =
 local penalty =
     game:createYesNoButton {
     label = "Travelling reduces fatigue and health?",
-    description = "Deducts fatigue and health upon arrival base on distance travelled\n\n*Will not go below 1 health",
+    description = "Deducts fatigue and health upon arrival base on distance travelled\n\n*Cannot cause death",
     variable = EasyMCM.createTableVariable {id = "penalty", table = config},
     callback = function()
         if config.penalty == true then
-            tes3.messageBox("Travel with penalty")
+            --tes3.messageBox("Travel with penalty")
         else
             config.extraRealism = false
-            tes3.messageBox("Travel without penalty")
+            --tes3.messageBox("Travel without penalty")
         end
         local MCMModList = tes3ui.findMenu("MWSE:ModConfigMenu").children
 
@@ -169,26 +168,26 @@ local bringfriends =
     variable = EasyMCM.createTableVariable {id = "bringFriends", table = config},
     callback = function()
         if config.bringFriends == true then
-            tes3.messageBox("Followers travel together")
+            --tes3.messageBox("Followers travel together")
         else
-            tes3.messageBox("Followers do not travel together")
+            --tes3.messageBox("Followers do not travel together")
         end
     end
 }
 
 local extraRealism =
     game:createYesNoButton {
-    label = "Extra realism?",
-    description = "Add reckless and cautious travelling. Some of the above options must be active.\n\nReckless: \nTravel 100% faster\nTrain athletics skill\nHealth and fatigue reduced\nCatch a random disease\nLose a certain amount of gold\n\nCautious: \nTravel 100% slower\nTrain sneak skill\nHealth and fatigue restored\nCatch a random disease\nLose a certain amount of gold\n\nThe chance to catch a disease is 3% * cells travelled\nThe chance to lose gold is 5% * cells travelled\nLose 5% of gold carried",
+    label = "Reckless and Cautious travelling",
+    description = "Add reckless and cautious travelling. Some of the above options must be active.\n\nReckless: \nTravel faster\nTrain athletics skill\nHealth and fatigue reduced\nAcquire a random disease\nLose a certain amount of gold\n\nCautious: \nTravel slower\nTrain sneak skill\nHealth and fatigue restored\nAcquire a random disease\nLose a certain amount of gold\n\nThe chance to catch a disease and lose gold depends on the distance travelled and the mode of travel\nLose 5% of gold carried",
     variable = EasyMCM.createTableVariable {id = "extraRealism", table = config},
     callback = function()
         if config.extraRealism == true then
             config.showConfirm = true
             config.penalty = true
             config.timeAdvance = true
-            tes3.messageBox("Extra realism mode")
+            --tes3.messageBox("Extra realism mode")
         else
-            tes3.messageBox("Normal mode")
+            --tes3.messageBox("Normal mode")
         end
         local MCMModList = tes3ui.findMenu("MWSE:ModConfigMenu").children
 

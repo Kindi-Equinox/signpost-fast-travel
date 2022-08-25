@@ -1,16 +1,35 @@
 local config
-local penalty = require("kindi.signpost fast travel.penalties")
+local auxFuncs = require("kindi.signpost fast travel.auxFuncs")
 local destination = require("kindi.signpost fast travel.destination")
+local i18n = mwse.loadTranslations("kindi.signpost fast travel")
 
 local function tryDetermineCell(name)
     if destination[name] then
         return name
     end
-    for str in name:gmatch("[^,%s]+") do
+    for str in name:gmatch("[^,()]+") do
+        str = str:gsub("^%s+","")
+        str = str:gsub("%s+$","")
+        str = str:gsub("%s%a", string.upper)
+        local str2 = str:gsub("(%w+)%s(%w+)", "%2 %1")
+
         if destination[str] then
             return str
-        end
+        elseif destination[str2] then
+            return str2
+        end     
     end
+end
+
+local function goToPresetPoint(e, CELL)
+    tes3.positionCell {
+        reference = e.activator,
+        cell = CELL,
+        position = destination[CELL].position,
+        orientation = destination[CELL].orientation,
+        suppressFader = false,
+        teleportCompanions = config.bringFriends
+    }
 end
 
 local function postFastTravel(e, CELL, travelType)
@@ -20,21 +39,13 @@ local function postFastTravel(e, CELL, travelType)
 
     -- //if traveller is in combat and the option is enabled, travelling is disabled
     if config.combatDeny and e.activator.mobile.inCombat then
-        tes3.messageBox("You can't travel when enemies are nearby.")
+        tes3.messageBox(i18n("main.noTravelCombatNotify"))
         tes3.fadeIn({duration = 2})
         return
     end
 
     -- //travel immediately to the preset position of this town
-    tes3.positionCell {
-        reference = e.activator,
-        cell = CELL,
-        position = destination[CELL].position,
-        orientation = destination[CELL].orientation,
-        suppressFader = false,
-        teleportCompanions = config.bringFriends
-    }
-
+    goToPresetPoint(e, CELL)
 
     local TM -- travel
     local DM -- divine
@@ -74,10 +85,12 @@ local function postFastTravel(e, CELL, travelType)
 
     -- //priority check for the travel point 1,2,3,4
     -- //if any of those points are found first, reposition to that point
+    local arrivalPos -- arrival position
+    local arrivalAng -- arrival angle 
+    local travelPrio -- travel priority
     for i = 1, 4 do
-        local arrivalPos -- arrival position
-        local arrivalAng -- arrival angle 
-        arrivalPos, arrivalAng = getTravel(config["travelTo" .. i])
+        travelPrio = config["travelTo" .. i]
+        arrivalPos, arrivalAng = getTravel(travelPrio)
         if arrivalPos and arrivalAng and tes3.positionCell {
             reference = e.activator,
             cell = CELL,
@@ -85,9 +98,6 @@ local function postFastTravel(e, CELL, travelType)
             orientation = arrivalAng,
             teleportCompanions = config.bringFriends
         } then
-            if config.debug then
-                tes3.messageBox("Using ".. config["travelTo" .. i] .." point")
-            end
             break
         end
         if arrivalPos == false then
@@ -95,8 +105,12 @@ local function postFastTravel(e, CELL, travelType)
         end
     end
 
+    if config.debug then
+        tes3.messageBox(i18n("debug.UsingTravelPoint", {travelPrio}))
+    end
+
     -- //move on to the penalty section (health, fatigue, time advance, gold, disease, etc...)
-    timer.delayOneFrame(function()penalty.penalties(e.activator, e.target.position:copy(), e.target, travelType, CELL)
+    timer.delayOneFrame(function()auxFuncs.penalties(e.activator, e.target.position:copy(), e.target, travelType, CELL)
         tes3.fadeIn({duration = 6})
     end)
 end
@@ -122,7 +136,25 @@ local function postActivated(e)
     --//note: some signposts may show invalid cell names, for now just ignore them
     if not CELL then
         if config.debug then
-            tes3.messageBox("Unable to find any cell that matches %s", e.target.object.name)
+            tes3.messageBox(i18n("debug.noCellFound", {e.target.object.name}))
+        end
+        return
+    end
+
+    --//if the activator is in the cell (or near) already, show alternate travel
+    if e.activator.cell.id:lower():find(CELL:lower(), nil, true) or e.activator.position:distance(tes3vector3.new(unpack(destination[CELL].position))) <= 8196 then
+        if config.showConfirm then
+            tes3.messageBox{
+                message = i18n("main.alreadyInCell", {CELL}),
+                buttons = {tes3.findGMST("sYes").value, tes3.findGMST("sNo").value},
+                callback = function(b)
+                    if b.button == 0 then
+                        goToPresetPoint(e, CELL)
+                    end
+                end
+            }
+        else
+            goToPresetPoint(e, CELL)
         end
         return
     end
@@ -135,8 +167,8 @@ local function postActivated(e)
     if config.showConfirm then
         if config.extraRealism then
             tes3.messageBox {
-                message = string.format("Travel to %s?", e.target.object.name),
-                buttons = {"Recklessly", "Cautiously", "No"},
+                message = string.format(i18n("main.travelTo", {e.target.object.name})),
+                buttons = {i18n("main.recklessly"), i18n("main.cautiously"), "No"},
                 callback = function(b)
                     if b.button == 0 then
                         postFastTravel(e, CELL, "Reckless")
@@ -149,11 +181,11 @@ local function postActivated(e)
             }
         else
             tes3.messageBox {
-                message = string.format("Travel to %s?", e.target.object.name),
-                buttons = {"Yes", "No"},
+                message = string.format(i18n("main.travelTo", {e.target.object.name})),
+                buttons = {tes3.findGMST("sYes").value, tes3.findGMST("sNo").value},
                 callback = function(b)
                     if b.button == 0 then
-                        postFastTravel(e, CELL)
+                        postFastTravel(e, CELL, "Normal")
                     else
                         tes3.fadeIn({duration = 2})
                     end
@@ -161,7 +193,7 @@ local function postActivated(e)
             }
         end
     else
-        postFastTravel(e, CELL)
+        postFastTravel(e, CELL, "Normal")
     end
 
 end
@@ -171,4 +203,9 @@ event.register("activate", postActivated)
 event.register("modConfigReady", function()
     config = require("kindi.signpost fast travel.config")
     require("kindi.signpost fast travel.mcm")
+end)
+
+event.register("initialized", function()
+    --//remove old mod file
+    os.remove("Data Files\\MWSE\\mods\\kindi\\signpost fast travel\\penalties.lua")
 end)
